@@ -1,0 +1,10 @@
+[package]
+name = "minirust_compiler"
+version = "0.1.0"
+edition = "2024"
+authors = ["Michael Wernthaler <michael.wernthaler@posteo.de>"]
+
+[dependencies]
+annotate-snippets = { version = "0.7.0", features = ["color"] }
+clap = "4.5.54"
+peg = "0.8.5"
