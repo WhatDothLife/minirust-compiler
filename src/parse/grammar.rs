@@ -6,10 +6,12 @@ peg::parser! {
     pub grammar lang() for str {
         // Comments
         rule block_comment() = quiet!{"/*" (!"*/" [_])* "*/"}
-     
+
+        rule line_comment() = "//" (!"\n" [_])* ("\n" / ![_])
+        
         // Optional space
-        rule _  = quiet!{([' ' | '\t' | '\r'] / block_comment())*} 
-        rule __ = quiet!{([' ' | '\n' | '\t' | '\r'] / block_comment())*}
+        rule _  = quiet!{([' ' | '\t' | '\r'] / block_comment() / line_comment())*} 
+        rule __ = quiet!{([' ' | '\n' | '\t' | '\r'] / block_comment() / line_comment())*}
 
         // Required space
         rule spa() = quiet!{[' ' | '\t' | '\r']+} // required space without \n
