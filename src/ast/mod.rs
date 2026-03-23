@@ -6,7 +6,7 @@ pub use tag::Tag;
 
 pub type _BinOp = Tag<BinOp>;
 pub type _Var = Tag<String>;
-pub type _Term = Tag<Term>;
+pub type _Expr = Tag<Expr>;
 pub type _Int = Tag<i64>;
 pub type _Vec<T> = Tag<Vec<T>>;
 pub type _Ident = Tag<String>;
@@ -36,26 +36,26 @@ pub enum Type {
 }
 
 #[derive(Clone, Debug)]
-pub enum Term {
+pub enum Expr {
     Unit,
     Var(_Var),
     Int(i64),
-    BinOp(_Term, _BinOp, _Term),
+    BinOp(_Expr, _BinOp, _Expr),
 
-    Seq(_Term, _Term),
+    Seq(_Expr, _Expr),
 
-    FunApp(_Term, _Vec<_Term>),
+    FunApp(_Expr, _Vec<_Expr>),
 
-    If(_Term, _Term, _Term),
+    If(_Expr, _Expr, _Expr),
 
-    Let(_Ident, Option<_Type>, _Term, _Term),
-    FunDec(_Ident, _Vec<(_Ident, _Type)>, _Type, _Term, _Term),
+    Let(_Ident, Option<_Type>, _Expr, _Expr),
+    FunDec(_Ident, _Vec<(_Ident, _Type)>, _Type, _Expr, _Expr),
 }
 
 pub type _Top = Tag<Top>;
 #[derive(Clone, Debug)]
 pub enum Top {
-    FunDec(_Ident, _Vec<(_Ident, _Type)>, _Type, _Term),
+    FunDec(_Ident, _Vec<(_Ident, _Type)>, _Type, _Expr),
 }
 
 pub type Program = Vec<_Top>;
