@@ -70,6 +70,11 @@ peg::parser! {
         pub rule term() -> ast::_Term = precedence! {
             s:position!() t:@ e:position!() { Tag::new(t, (s, e)) }
             --
+            "if" __ t:term() __ "{" __ b:seq() __ "}" __ "else" __ "{" __ e:seq() __ "}"
+              { ast::Term::If(t, b, e.clone()) }
+            "if" __ t:term() __ "{" __ b:seq() __ "}"
+              { ast::Term::If(t, b.clone(), Tag::new(ast::Term::Unit, b.span)) }
+            --
             x:(@) __ s:position!() "==" e:position!() __ y:@ { ast::Term::BinOp(x, Tag::new(ast::BinOp::Eq, (s, e)), y) }
             x:(@) __ s:position!() "!=" e:position!() __ y:@ { ast::Term::BinOp(x, Tag::new(ast::BinOp::Neq, (s, e)), y) }
             --
@@ -114,10 +119,9 @@ peg::parser! {
               { ast::Term::FunDec(i.clone(), ts, Tag::new(ast::Type::Unit, i.span), t, c) }
              "fn" spa() i:ident() _ "(" _ ts:list(<tuple_colon(<ident()>, <typ()>)>) _ ")" _ "{" __ t:seq() __ "}"
               { ast::Term::FunDec(i.clone(), ts, Tag::new(ast::Type::Unit, i.span), t, Tag::new(ast::Term::Unit, i.span)) }
-            
             --
-            l:(@) _ ";" __ r:@ { ast::Term::Seq(l, r) }
-            l:(@) _ s:position!() ";" __ e:position!() { ast::Term::Seq(l.clone(), Tag::new(ast::Term::Unit, l.span)) }
+            l:seq() __ ";" __ r:@ { ast::Term::Seq(l, r) }
+            l:seq() __ s:position!() ";" __ e:position!() { ast::Term::Seq(l.clone(), Tag::new(ast::Term::Unit, l.span)) }
             --
             e:term() { e.into_inner() }
         }

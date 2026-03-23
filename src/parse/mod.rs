@@ -2,7 +2,7 @@ mod grammar;
 use crate::ast::Program;
 use grammar::lang;
 
-const KEYWORDS: [&str; 2] = ["let", "fn"];
+const KEYWORDS: [&str; 4] = ["let", "fn", "if", "else"];
 
 use crate::ast::err::{Error, Result};
 

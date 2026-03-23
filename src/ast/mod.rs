@@ -46,6 +46,8 @@ pub enum Term {
 
     FunApp(_Term, _Vec<_Term>),
 
+    If(_Term, _Term, _Term),
+
     Let(_Ident, Option<_Type>, _Term, _Term),
     FunDec(_Ident, _Vec<(_Ident, _Type)>, _Type, _Term, _Term),
 }
