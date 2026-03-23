@@ -71,7 +71,7 @@ peg::parser! {
             s:position!() t:@ e:position!() { Tag::new(t, (s, e)) }
             --
             "if" __ t:expr() __ "{" __ b:seq() __ "}" __ "else" __ "{" __ e:seq() __ "}"
-              { ast::Expr::If(t, b, e.clone()) }
+              { ast::Expr::If(t, b, e) }
             "if" __ t:expr() __ "{" __ b:seq() __ "}"
               { ast::Expr::If(t, b.clone(), Tag::new(ast::Expr::Unit, b.span)) }
             "println!(\"{}\"," __ e:expr() __ ")"
