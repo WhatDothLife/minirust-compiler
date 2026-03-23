@@ -45,6 +45,7 @@ pub enum Expr {
     Seq(_Expr, _Expr),
 
     FunApp(_Expr, _Vec<_Expr>),
+    Print(_Expr),
 
     If(_Expr, _Expr, _Expr),
 

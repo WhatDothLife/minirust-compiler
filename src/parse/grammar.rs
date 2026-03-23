@@ -74,6 +74,8 @@ peg::parser! {
               { ast::Expr::If(t, b, e.clone()) }
             "if" __ t:expr() __ "{" __ b:seq() __ "}"
               { ast::Expr::If(t, b.clone(), Tag::new(ast::Expr::Unit, b.span)) }
+            "println!(\"{}\"," __ e:expr() __ ")"
+              { ast::Expr::Print(e) }
             --
             x:(@) __ s:position!() "==" e:position!() __ y:@ { ast::Expr::BinOp(x, Tag::new(ast::BinOp::Eq, (s, e)), y) }
             x:(@) __ s:position!() "!=" e:position!() __ y:@ { ast::Expr::BinOp(x, Tag::new(ast::BinOp::Neq, (s, e)), y) }
