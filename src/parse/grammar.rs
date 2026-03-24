@@ -63,7 +63,7 @@ peg::parser! {
             = i:i64() { ast::Expr::Int(i) }
             / "()" { ast::Expr::Unit }
             / "(" __ e:expr() __ ")" { e.into_inner() }
-            / i:ident() { ast::Expr::Var(i)   }
+            / i:ident() { ast::Expr::Ident(i)   }
 
         // Expressions involving operators or evaluation order
         #[cache_left_rec]

@@ -3,8 +3,9 @@ use std::path::PathBuf;
 use std::{fs, io};
 
 use clap::{Arg, ArgAction, Command};
+use minirust_compiler::ast;
 
-fn error<T: Display>(message: T) -> ! {
+fn error(message: &str) -> ! {
     eprintln!("{}", message);
     std::process::exit(1);
 }
@@ -46,17 +47,17 @@ fn main() -> io::Result<()> {
         println!("\n===== READING SOURCE FILE =====\n");
     }
     let src_str = fs::read_to_string(src_path).unwrap_or_else(|e| {
-        error(format!(
-            "Failed reading from source file {:?}: {}",
-            src_path, e
-        ))
+        error(format!("Failed reading from source file {:?}: {}", src_path, e).as_str())
     });
 
     if verbose {
         println!("{}", src_str);
     }
 
-    let _ = minirust_compiler::parse::parse(&src_str).unwrap_or_else(|err| error(err));
+    if let Err(e) = run_compiler(&src_str, verbose) {
+        eprintln!("{}", e.render(&src_str, true));
+        std::process::exit(1);
+    }
 
     Ok(())
 
@@ -83,6 +84,18 @@ fn main() -> io::Result<()> {
     //         }
     //     }
     // }
+}
+
+fn run_compiler(src_str: &str, verbose: bool) -> ast::Result<()> {
+    let ast = minirust_compiler::parse::parse(&src_str)?;
+
+    if verbose {
+        println!("{:#?}", ast);
+    }
+
+    minirust_compiler::typing::type_check(&ast)?;
+
+    Ok(())
 }
 
 fn src_parser(s: &str) -> Result<PathBuf, String> {

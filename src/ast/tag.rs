@@ -1,6 +1,4 @@
 use std::fmt::{Debug, Display};
-use std::ops::Deref;
-
 
 #[derive(Clone)]
 pub struct Tag<T> {
@@ -16,16 +14,20 @@ impl<T> Tag<T> {
         }
     }
 
+    pub fn inner(&self) -> &T {
+        &self.item
+    }
+
+    pub fn span(&self) -> (usize, usize) {
+        self.span
+    }
+
     pub fn into_inner(self) -> T {
         *self.item
     }
-}
 
-impl<T> Deref for Tag<T> {
-    type Target = T;
-
-    fn deref(&self) -> &Self::Target {
-        self.item.as_ref()
+    pub fn to<U>(&self, item: U) -> Tag<U> {
+        Tag::new(item, self.span)
     }
 }
 
@@ -34,7 +36,7 @@ impl<T: Debug> Debug for Tag<T> {
         f.debug_struct("Tag")
             .field("item", &self.item)
             .field("start", &self.span.0)
-            .field("end", &self.span.1)   
+            .field("end", &self.span.1)
             .finish()
     }
 }

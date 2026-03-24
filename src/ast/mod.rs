@@ -1,8 +1,10 @@
-pub mod err;
+mod err;
 mod fmt;
 mod tag;
 
 pub use tag::Tag;
+pub use err::Error;
+pub use err::Result;
 
 pub type _BinOp = Tag<BinOp>;
 pub type _Var = Tag<String>;
@@ -31,6 +33,7 @@ pub enum BinOp {
 #[derive(Clone, Debug)]
 pub enum Type {
     Unit,
+    Bool,
     Int,
     Fun(_Vec<_Type>, _Type),
 }
@@ -38,7 +41,7 @@ pub enum Type {
 #[derive(Clone, Debug)]
 pub enum Expr {
     Unit,
-    Var(_Var),
+    Ident(_Var),
     Int(i64),
     BinOp(_Expr, _BinOp, _Expr),
 
