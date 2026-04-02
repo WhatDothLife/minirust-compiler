@@ -2,13 +2,13 @@ mod err;
 mod fmt;
 mod tag;
 
-pub use tag::Tag;
 pub use err::Error;
 pub use err::Result;
+pub use tag::Tag;
 
 pub type _BinOp = Tag<BinOp>;
 pub type _Var = Tag<String>;
-pub type _Expr = Tag<Expr>;
+pub type _Expr = Box<Tag<Expr>>;
 pub type _Int = Tag<i64>;
 pub type _Vec<T> = Tag<Vec<T>>;
 pub type _Ident = Tag<String>;
@@ -27,39 +27,77 @@ pub enum BinOp {
     Lte,
 
     Eq,
-    Neq,
+    Ne,
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone)]
 pub enum Type {
     Unit,
     Bool,
-    Int,
-    Fun(_Vec<_Type>, _Type),
+    I64,
+    Fun(_Vec<_Type>, Box<_Type>),
+}
+
+impl std::fmt::Debug for Type {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Type::Unit => write!(f, "()"),
+            Type::Bool => write!(f, "bool"),
+            Type::I64 => write!(f, "i64"),
+            Type::Fun(params, ret) => {
+                write!(f, "fn(")?;
+                for (i, param) in params.inner().iter().enumerate() {
+                    if i > 0 {
+                        write!(f, ", ")?;
+                    }
+                    write!(f, "{:?}", param)?;
+                }
+                write!(f, ") -> {:?}", ret)
+            }
+        }
+    }
 }
 
 #[derive(Clone, Debug)]
 pub enum Expr {
     Unit,
+    Bool(bool),
     Ident(_Var),
     Int(i64),
     BinOp(_Expr, _BinOp, _Expr),
 
-    Seq(_Expr, _Expr),
-
+    If(_Expr, _Expr, _Expr),
     FunApp(_Expr, _Vec<_Expr>),
     Print(_Expr),
 
-    If(_Expr, _Expr, _Expr),
-
     Let(_Ident, Option<_Type>, _Expr, _Expr),
-    FunDec(_Ident, _Vec<(_Ident, _Type)>, _Type, _Expr, _Expr),
+    FunDec(FunSignature, _Expr),
+    Seq(_Expr, _Expr),
 }
 
 pub type _Top = Tag<Top>;
 #[derive(Clone, Debug)]
 pub enum Top {
-    FunDec(_Ident, _Vec<(_Ident, _Type)>, _Type, _Expr),
+    FunDec(FunSignature),
 }
 
-pub type Program = Vec<_Top>;
+#[derive(Clone, Debug)]
+pub struct Program(pub Vec<_Top>);
+
+impl<'a> IntoIterator for &'a Program {
+    type Item = &'a _Top;
+    type IntoIter = std::slice::Iter<'a, _Top>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        self.0.iter()
+    }
+}
+
+#[derive(Clone, Debug)]
+pub struct FunSignature {
+    pub name: _Ident,
+    pub params: _Vec<(_Ident, _Type)>,
+    pub ret: _Type,
+    pub body: _Expr,
+}
+

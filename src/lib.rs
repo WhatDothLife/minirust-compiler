@@ -1,4 +1,5 @@
 pub mod ast;
 pub mod ir;
 pub mod parse;
-pub mod typing;
+pub mod util;
+pub mod semant;

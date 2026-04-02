@@ -2,16 +2,17 @@ use std::fmt::{Debug, Display};
 
 #[derive(Clone)]
 pub struct Tag<T> {
-    pub item: Box<T>,
-    pub span: (usize, usize),
+    item: T,
+    span: (usize, usize),
 }
 
 impl<T> Tag<T> {
     pub fn new(item: T, span: (usize, usize)) -> Self {
-        Tag {
-            item: Box::new(item),
-            span,
-        }
+        Tag { item, span }
+    }
+
+    pub fn boxed(item: T, span: (usize, usize)) -> Box<Self> {
+        Box::new(Tag { item, span })
     }
 
     pub fn inner(&self) -> &T {
@@ -23,11 +24,18 @@ impl<T> Tag<T> {
     }
 
     pub fn into_inner(self) -> T {
-        *self.item
+        self.item
     }
 
     pub fn to<U>(&self, item: U) -> Tag<U> {
         Tag::new(item, self.span)
+    }
+
+}
+
+impl<T: Clone> Tag<T> {
+    pub fn at<U>(&self, other: &Tag<U>) -> Tag<T> {
+        Tag::new(self.inner().clone(), other.span())
     }
 }
 
