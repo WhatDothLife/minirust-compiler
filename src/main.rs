@@ -1,9 +1,9 @@
-use std::fmt::Display;
 use std::path::PathBuf;
 use std::{fs, io};
 
 use clap::{Arg, ArgAction, Command};
 use minirust_compiler::ast;
+use minirust_compiler::pretty::Pretty;
 
 fn error(message: &str) -> ! {
     eprintln!("{}", message);
@@ -47,7 +47,10 @@ fn main() -> io::Result<()> {
         println!("\n===== READING SOURCE FILE =====\n");
     }
     let src_str = fs::read_to_string(src_path).unwrap_or_else(|e| {
-        error(format!("Failed reading from source file {:?}: {}", src_path, e).as_str())
+        error(&format!(
+            "Failed reading from source file {:?}: {}",
+            src_path, e
+        ))
     });
 
     if verbose {
@@ -55,8 +58,7 @@ fn main() -> io::Result<()> {
     }
 
     if let Err(e) = run_compiler(&src_str, verbose) {
-        eprintln!("{}", e.render(&src_str, true));
-        std::process::exit(1);
+        error(&e.render(&src_str, true))
     }
 
     Ok(())
@@ -87,13 +89,21 @@ fn main() -> io::Result<()> {
 }
 
 fn run_compiler(src_str: &str, verbose: bool) -> ast::Result<()> {
-    let ast = minirust_compiler::parse::parse(&src_str)?;
-
     if verbose {
-        println!("{:#?}", ast);
+        println!("\n===== TYPE CHECKING =====\n");
     }
 
-    minirust_compiler::typing::type_check(&ast)?;
+    let ast = minirust_compiler::parse::program(src_str)?;
+
+    if verbose {
+        println!("{}", ast.pretty(4));
+    }
+
+    let ir_program = minirust_compiler::semant::check(&ast)?;
+
+    if verbose {
+        println!("{}", ir_program.pretty(4));
+    }
 
     Ok(())
 }

@@ -1,6 +1,6 @@
 use crate::ast;
-use crate::parse::KEYWORDS;
 use crate::ast::Tag;
+use crate::parse::KEYWORDS;
 
 peg::parser! {
     pub grammar lang() for str {
@@ -8,9 +8,9 @@ peg::parser! {
         rule block_comment() = quiet!{"/*" (!"*/" [_])* "*/"}
 
         rule line_comment() = "//" (!"\n" [_])* ("\n" / ![_])
-        
+
         // Optional space
-        rule _  = quiet!{([' ' | '\t' | '\r'] / block_comment() / line_comment())*} 
+        rule _  = quiet!{([' ' | '\t' | '\r'] / block_comment() / line_comment())*}
         rule __ = quiet!{([' ' | '\n' | '\t' | '\r'] / block_comment() / line_comment())*}
 
         // Required space
@@ -43,42 +43,44 @@ peg::parser! {
         rule ident() -> ast::_Ident
             = i:tag(<str()>) { i }
 
-        // Types
         rule _typ() -> ast::Type
             = "()" { ast::Type::Unit }
-            / "i64"  { ast::Type::Int }
-
+            / "i64" { ast::Type::I64 }
+            / "bool" { ast::Type::Bool }
+            / "fn" _ "(" _ args:list(<typ()>) _ ")" _ "->" _ ret:typ() {
+                ast::Type::Fun(args, Box::new(ret))
+            }
 
         rule typ() -> ast::_Type = precedence!{
             s:position!() t:@ e:position!() { Tag::new(t, (s, e)) }
             --
-            s:position!() "()" e:position!() _ "->" _ c:@ { ast::Type::Fun(Tag::new(vec!(), (s, e)), c)}
-            --
             t:_typ() { t }
         }
 
-        // Primary expressions 
+        // Primary expressions
         #[cache_left_rec]
         rule primary() -> ast::Expr
             = i:i64() { ast::Expr::Int(i) }
             / "()" { ast::Expr::Unit }
+            / "true" { ast::Expr::Bool(true) }
+            / "false" { ast::Expr::Bool(false) }
             / "(" __ e:expr() __ ")" { e.into_inner() }
             / i:ident() { ast::Expr::Ident(i)   }
 
         // Expressions involving operators or evaluation order
         #[cache_left_rec]
         pub rule expr() -> ast::_Expr = precedence! {
-            s:position!() t:@ e:position!() { Tag::new(t, (s, e)) }
+            s:position!() t:@ e:position!() { Tag::boxed(t, (s, e)) }
             --
             "if" __ t:expr() __ "{" __ b:seq() __ "}" __ "else" __ "{" __ e:seq() __ "}"
-              { ast::Expr::If(t, b, e) }
+            { ast::Expr::If(t, b, e) }
             "if" __ t:expr() __ "{" __ b:seq() __ "}"
-              { ast::Expr::If(t, b.clone(), Tag::new(ast::Expr::Unit, b.span)) }
+            { ast::Expr::If(t, b.clone(), Tag::boxed(ast::Expr::Unit, b.span())) }
             "println!(\"{}\"," __ e:expr() __ ")"
-              { ast::Expr::Print(e) }
+            { ast::Expr::Print(e) }
             --
             x:(@) __ s:position!() "==" e:position!() __ y:@ { ast::Expr::BinOp(x, Tag::new(ast::BinOp::Eq, (s, e)), y) }
-            x:(@) __ s:position!() "!=" e:position!() __ y:@ { ast::Expr::BinOp(x, Tag::new(ast::BinOp::Neq, (s, e)), y) }
+            x:(@) __ s:position!() "!=" e:position!() __ y:@ { ast::Expr::BinOp(x, Tag::new(ast::BinOp::Ne, (s, e)), y) }
             --
             x:(@) __ s:position!() ">" e:position!() __ y:@ { ast::Expr::BinOp(x, Tag::new(ast::BinOp::Gt, (s, e)), y) }
             x:(@) __ s:position!() ">=" e:position!() __ y:@  { ast::Expr::BinOp(x, Tag::new(ast::BinOp::Gte, (s, e)), y) }
@@ -96,34 +98,35 @@ peg::parser! {
             t:primary() { t }
         }
 
+
         #[cache_left_rec]
         pub rule seq() -> ast::_Expr = precedence! {
-            s:position!() t:@ e:position!() { Tag::new(t, (s, e)) }
+            s:position!() t:@ e:position!() { Tag::boxed(t, (s, e)) }
             --
             // let: 4 variants (type annotation yes/no, continuation yes/no).
             // Missing continuation defaults to Unit.
              "let" spa() __ i:ident() __ "=" __ t:expr() _ ";" __  c:seq()
               { ast::Expr::Let(i, None, t, c) }
              "let" spa() __ s:position!() i:ident() e:position!() __ "=" __ t:expr() _ ";" __
-              { ast::Expr::Let(i, None, t, Tag::new(ast::Expr::Unit, (s, e))) }
+              { ast::Expr::Let(i, None, t, Tag::boxed(ast::Expr::Unit, (s, e))) }
              "let" spa() __ i:ident() _ ":" _ ty:typ() __  "=" __ t:expr() _ ";" __  c:seq()
               { ast::Expr::Let(i, Some(ty), t, c) }
              "let" spa() __ s:position!() i:ident() e:position!()  _ ":" _ ty:typ() __ "=" __ t:expr() _ ";" __
-              { ast::Expr::Let(i, Some(ty), t, Tag::new(ast::Expr::Unit, (s, e))) }
+              { ast::Expr::Let(i, Some(ty), t, Tag::boxed(ast::Expr::Unit, (s, e))) }
             // fn: 4 variants (continuation yes/no, return type yes/no).
             // Missing return type defaults to Unit.
             // Missing continuation defaults to Unit.
-             "fn" spa() i:ident() _ "(" _ ts:list(<tuple_colon(<ident()>, <typ()>)>) _ ")" _ "->" _ ty:typ() __ "{" __ t:seq() __ "}" _ "\n" __ c:seq()
-              { ast::Expr::FunDec(i, ts, ty, t, c) }
-             "fn" spa() i:ident() _ "(" _ ts:list(<tuple_colon(<ident()>, <typ()>)>) _ ")" _ "->" _ ty:typ() __ "{" __ t:seq() __ "}"
-              { ast::Expr::FunDec(i.clone(), ts, ty, t, Tag::new(ast::Expr::Unit, i.span)) }
-             "fn" spa() i:ident() _ "(" _ ts:list(<tuple_colon(<ident()>, <typ()>)>) _ ")" _ "{" __ t:seq() __ "}" _ "\n" __ c:seq()
-              { ast::Expr::FunDec(i.clone(), ts, Tag::new(ast::Type::Unit, i.span), t, c) }
-             "fn" spa() i:ident() _ "(" _ ts:list(<tuple_colon(<ident()>, <typ()>)>) _ ")" _ "{" __ t:seq() __ "}"
-              { ast::Expr::FunDec(i.clone(), ts, Tag::new(ast::Type::Unit, i.span), t, Tag::new(ast::Expr::Unit, i.span)) }
+            "fn" spa() i:ident() _ "(" _ ts:list(<tuple_colon(<ident()>, <typ()>)>) _ ")" _ "->" _ ty:typ() __ "{" __ t:seq() __ "}" _ "\n" __ c:seq()
+            { ast::Expr::FunDec(ast::FunSignature { name: i, params: ts, ret: ty, body: t }, c) }
+            "fn" spa() i:ident() _ "(" _ ts:list(<tuple_colon(<ident()>, <typ()>)>) _ ")" _ "->" _ ty:typ() __ "{" __ t:seq() __ "}"
+            { ast::Expr::FunDec(ast::FunSignature { name: i.clone(), params: ts, ret: ty, body: t }, Tag::boxed(ast::Expr::Unit, i.span())) }
+            "fn" spa() i:ident() _ "(" _ ts:list(<tuple_colon(<ident()>, <typ()>)>) _ ")" _ "{" __ t:seq() __ "}" _ "\n" __ c:seq()
+            { ast::Expr::FunDec(ast::FunSignature { name: i.clone(), params: ts, ret: Tag::new(ast::Type::Unit, i.span()), body: t }, c) }
+            "fn" spa() i:ident() _ "(" _ ts:list(<tuple_colon(<ident()>, <typ()>)>) _ ")" _ "{" __ t:seq() __ "}"
+            { ast::Expr::FunDec(ast::FunSignature { name: i.clone(), params: ts, ret: Tag::new(ast::Type::Unit, i.span()), body: t }, Tag::boxed(ast::Expr::Unit, i.span())) }
             --
             l:seq() __ ";" __ r:@ { ast::Expr::Seq(l, r) }
-            l:seq() __ s:position!() ";" __ e:position!() { ast::Expr::Seq(l.clone(), Tag::new(ast::Expr::Unit, l.span)) }
+            l:seq() __ s:position!() ";" __ e:position!() { ast::Expr::Seq(l.clone(), Tag::boxed(ast::Expr::Unit, l.span())) }
             --
             e:expr() { e.into_inner() }
         }
@@ -133,15 +136,14 @@ peg::parser! {
         rule top() -> ast::_Top = precedence! {
             s:position!() t:@ e:position!() { Tag::new(t, (s, e)) }
             --
-            "fn" spa() i:ident() _ "(" __ ts:list(<tuple_colon(<ident()>, <typ()>)>) __ ")" _ "->" _ ty:typ() __ "{" __ t:seq() __ "}"
-            { ast::Top::FunDec(i, ts, ty, t) }
-
-            "fn" spa() i:ident() _ "(" __ ts:list(<tuple_colon(<ident()>, <typ()>)>) __ ")" _ "{" __ t:seq() __ "}"
-            { ast::Top::FunDec(i.clone(), ts, Tag::new(ast::Type::Unit, i.span), t) }
+           "fn" spa() i:ident() _ "(" __ ts:list(<tuple_colon(<ident()>, <typ()>)>) __ ")" _ "->" _ ty:typ() __ "{" __ t:seq() __ "}"
+            { ast::Top::FunDec(ast::FunSignature { name: i, params: ts, ret: ty, body: t }) }
+           "fn" spa() i:ident() _ "(" __ ts:list(<tuple_colon(<ident()>, <typ()>)>) __ ")" _ "{" __ t:seq() __ "}"
+            { ast::Top::FunDec(ast::FunSignature { name: i.clone(), params: ts, ret: Tag::new(ast::Type::Unit, i.span()), body: t }) }
         }
 
-        pub rule program() -> ast::Program =  
-            __ ts:(top() ++ (sep() __)) __? { ts }
-        
+        pub rule program() -> ast::Program =
+            __ ts:(top() ++ (sep() __)) __? { ast::Program(ts) }
+
     }
 }
