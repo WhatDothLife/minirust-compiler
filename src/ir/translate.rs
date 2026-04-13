@@ -242,10 +242,11 @@ impl FunContext {
         };
 
         let exit_node = ir::Stmt::Move(ir::Expr::Temp(Temp::RV), full_body);
+        let linearized = ir::canonical::linearize(exit_node);
 
         Fragment::Proc {
             label: self.label,
-            body: exit_node,
+            body: linearized,
             frame: self.frame,
         }
     }

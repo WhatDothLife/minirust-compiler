@@ -6,8 +6,8 @@ impl Pretty for Expr {
     fn pretty(&self, indent: usize) -> String {
         match self {
             Expr::Const(n) => format!("Const({})", n),
-            Expr::Name(l) => format!("Name({:?})", l), 
-            Expr::Temp(t) => format!("{:?}", t),       
+            Expr::Name(l) => format!("Name({:?})", l),
+            Expr::Temp(t) => format!("{:?}", t),
             Expr::BinOp(op, l, r) => {
                 format!(
                     "BinOp({:?},\n{},\n{})",
@@ -82,14 +82,17 @@ impl Pretty for Fragment {
         match self {
             Fragment::Proc { label, body, frame } => {
                 let s = space(indent);
+                let inner_space = space(indent + 4);
+
+                let body_pretty: String = body
+                    .iter()
+                    .map(|stmt| stmt.pretty(indent + 4))
+                    .collect::<Vec<String>>()
+                    .join("\n");
+
                 format!(
-                    "{}Proc({:?}) {{\n{}  Frame: {:?}\n{}\n{}}}",
-                    s,
-                    label,
-                    s,
-                    frame, // Assumes Frame has a reasonable Debug impl
-                    body.pretty(indent + 1),
-                    s
+                    "{}Proc({:?}) {{\n{}Frame: {:?}\n{}\n{}}}",
+                    s, label, inner_space, frame, body_pretty, s
                 )
             }
         }

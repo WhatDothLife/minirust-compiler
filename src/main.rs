@@ -108,8 +108,7 @@ fn run_compiler(src_str: &str, verbose: bool) -> ast::Result<()> {
     for i in ir_program.fragments {
         match i {
             minirust_compiler::ir::Fragment::Proc { label, body, frame } => {
-                let lin = minirust_compiler::ir::canonical::linearize(body);
-                for stmt in lin {
+                for stmt in body {
                     println!("{:?}", stmt);
                 }
             },

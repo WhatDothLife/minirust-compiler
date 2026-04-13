@@ -145,7 +145,7 @@ pub enum RelOp {
 pub enum Fragment {
     Proc {
         label: Label,
-        body: Stmt,
+        body: Vec<Stmt>,
         frame: Frame,
     },
 }
