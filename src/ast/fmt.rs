@@ -14,7 +14,7 @@ impl Display for Type {
                 let arg_list = args
                     .inner()
                     .iter()
-                    .map(|ty_tag| format!("{}", ty_tag.inner())) 
+                    .map(|ty_tag| format!("{}", ty_tag.inner()))
                     .collect::<Vec<String>>()
                     .join(", ");
 
@@ -73,11 +73,12 @@ impl Pretty for Expr {
             }
 
             Expr::FunDec(sig, continuation) => {
+                let next_s = space(next); // Use the incremented space
                 format!(
                     "{}\n{}Next: {}",
                     sig.pretty(indent),
-                    s,
-                    continuation.inner().pretty(indent + 1)
+                    next_s, // Indent the "Next" label
+                    continuation.inner().pretty(next)
                 )
             }
 
@@ -87,12 +88,13 @@ impl Pretty for Expr {
                     .map(|t| format!(": {}", t.inner()))
                     .unwrap_or_default();
 
+                let next_s = space(next);
                 format!(
                     "Let(name: {}{}, val: {})\n{}Next: {}",
                     name.inner(),
                     ty_str,
-                    val.inner().pretty(next), // Use 'next' instead of 0
-                    s,
+                    val.inner().pretty(next),
+                    next_s,
                     continuation.inner().pretty(next)
                 )
             }
