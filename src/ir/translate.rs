@@ -107,14 +107,15 @@ pub fn int(i: i64) -> Expr {
 
 fn mem(access: &Access) -> ir::Expr {
     match access {
-        Access::InFrame(offset) => ir::Expr::Mem(
-            ir::Expr::BinOp(
-                ir::BinOp::Add,
-                ir::Expr::Temp(Temp::FP).boxed(),
-                ir::Expr::Const(*offset as i64).boxed(),
-            )
-            .boxed(),
-        ), // Register support, goes here
+        // Access::InFrame(offset) => ir::Expr::Mem(
+        //     ir::Expr::BinOp(
+        //         ir::BinOp::Add,
+        //         ir::Expr::Temp(Temp::FP).boxed(),
+        //         ir::Expr::Const(*offset as i64).boxed(),
+        //     )
+        //     .boxed(),
+        // ), 
+        Access::InReg(temp) => ir::Expr::Temp(*temp),
     }
 }
 
@@ -242,7 +243,7 @@ impl FunContext {
         };
 
         let exit_node = ir::Stmt::Move(ir::Expr::Temp(Temp::RV), full_body);
-        let linearized = ir::canonical::linearize(exit_node);
+        let linearized = ir::canonical::linearize(exit_node); // Could be made more explicit instead of burying it here
 
         Fragment::Proc {
             label: self.label,

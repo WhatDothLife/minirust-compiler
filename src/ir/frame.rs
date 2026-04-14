@@ -3,9 +3,22 @@ use crate::ir::translate;
 
 use super::symbols::Temp;
 
+/// Represents how a variable or sub-expression is accessed within a frame.
+///
+/// In this "Virtual Register" model, all local variables are initially 
+/// treated as having an infinite supply of registers. 
 #[derive(Clone, Debug)]
 pub enum Access {
-    InFrame(i32),
+    /// The value resides in a virtual register (Temp). 
+    ///
+    /// During the "Pure Temp" IR phase, every variable is assigned a `Temp`.
+    /// The "Lazy Allocator" will later map these to specific stack offsets 
+    /// or physical registers during the Final Assembly Rewrite.
+    InReg(Temp),
+
+    // NOTE InFrame(i32) is currently omitted to support the "Pure Temp" approach.
+    // Re-introduce only for "Escaping" variables if nested functions are added,
+    // or for variables that must reside in memory (like arrays/structs).
 }
 
 pub const WORD_SIZE: i32 = 8; // for 64-bit architecture
@@ -25,8 +38,12 @@ impl Frame {
     }
 
     pub fn alloc_local(&mut self) -> Access {
-        self.offset_counter -= WORD_SIZE;
-        Access::InFrame(self.offset_counter)
+        // NOTE In the case of "Escaping" variables the code would look like
+        // this:
+        // self.offset_counter -= WORD_SIZE;
+        // Access::InFrame(self.offset_counter)
+
+        Access::InReg(Temp::new())
     }
 
     pub fn alloc_params(&mut self, count: usize) -> Vec<Access> {
@@ -45,18 +62,4 @@ impl Frame {
         }
     }
 
-    // // Frame pointer
-    // pub fn fp() -> Temp {
-    //     Temp(0)
-    // }
-
-    // // Return Value register (e.g., %rax)
-    // pub fn rv() -> Temp {
-    //     Temp(1)
-    // }
-
-    // // Stack pointer
-    // pub fn sp() -> Temp {
-    //     Temp(2)
-    // }
 }
