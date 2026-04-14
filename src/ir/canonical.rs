@@ -2,6 +2,11 @@ use crate::util::Boxed;
 
 use super::{Expr, Stmt, Temp};
 
+fn is_nop(stmt: &Stmt) -> bool {
+    matches!(stmt, Stmt::Expr(Expr::Const(0)))
+        || matches!(stmt, Stmt::Seq(a, b) if is_nop(a) && is_nop(b))
+}
+
 /// Checks if a statement and an expression commute.
 ///
 /// Commutativity exists if the execution of the statement does not affect
@@ -13,6 +18,10 @@ use super::{Expr, Stmt, Temp};
 /// must be executed before the expression, or the expression must be
 /// preserved (e.g., in a temporary register).
 fn commutes(stmt: &Stmt, expr: &Expr) -> bool {
+    if is_nop(stmt) {
+        return true;
+    }
+
     match (stmt, expr) {
         (Stmt::Expr(Expr::Const(_)), _) => true,
         (_, Expr::Name(_) | Expr::Const(_)) => true,
