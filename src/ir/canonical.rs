@@ -82,7 +82,7 @@ fn reorder(mut exprs: Vec<Expr>) -> (Stmt, Vec<Expr>) {
 ///
 /// The returned `Stmt` encapsulates both the extracted side effects and
 /// the reconstructed statement, ensuring that the original semantics are preserved.
-pub fn reorder_stmt_with<F>(exprs: Vec<Expr>, assemble: F) -> Stmt
+fn reorder_stmt_with<F>(exprs: Vec<Expr>, assemble: F) -> Stmt
 where
     F: FnOnce(Vec<Expr>) -> Stmt,
 {
@@ -102,7 +102,7 @@ where
 /// Returns a tuple of:
 /// - A `Stmt` containing the extracted side effects (to be executed first).
 /// - The reconstructed `Expr` (now free of nested `ESeq`s).
-pub fn reorder_expr_with<F>(exprs: Vec<Expr>, assemble: F) -> (Stmt, Expr)
+fn reorder_expr_with<F>(exprs: Vec<Expr>, assemble: F) -> (Stmt, Expr)
 where
     F: FnOnce(Vec<Expr>) -> Expr,
 {
