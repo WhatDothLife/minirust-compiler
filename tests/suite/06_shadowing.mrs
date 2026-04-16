@@ -1,0 +1,15 @@
+fn main() {
+    let x = 10;
+    println!("{}", x); 
+    
+    let x = 20; 
+    println!("{}", x); 
+    
+    fn inner_scope() {
+        let x = 30; 
+        println!("{}", x); 
+    }
+    inner_scope();
+    
+    println!("{}", x); 
+}

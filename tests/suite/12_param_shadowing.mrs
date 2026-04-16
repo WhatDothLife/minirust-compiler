@@ -1,0 +1,9 @@
+fn main() {
+    let x = 100;
+    fn display(x: i64) {
+        println!("{}", x);
+    }
+
+    display(42); // Needs to print 42
+    println!("{}", x); // Needs to print 100
+}

@@ -1,0 +1,7 @@
+fn main() {
+    fn do_nothing() {
+        ()
+    }
+    let x = do_nothing();
+    println!("{}", 99); 
+}

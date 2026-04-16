@@ -1,0 +1,7 @@
+fn main() {
+    fn square(x: i64) -> i64 {
+        x * x
+    }
+    let f = square;
+    println!("{}", f(5));
+}
