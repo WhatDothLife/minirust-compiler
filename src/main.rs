@@ -2,8 +2,7 @@ use std::path::PathBuf;
 use std::{fs, io};
 
 use clap::{Arg, ArgAction, Command};
-use minirust_compiler::ast;
-use minirust_compiler::util::Pretty;
+use minirust_compiler::{ast, codegen, ir, parse, semant, util::Pretty};
 
 fn error(message: &str) -> ! {
     eprintln!("{}", message);
@@ -57,65 +56,58 @@ fn main() -> io::Result<()> {
         println!("{}", src_str);
     }
 
-    if let Err(e) = run_compiler(&src_str, verbose) {
-        error(&e.render(&src_str, true))
-    }
-
-    Ok(())
-
-    // -------------------------------------------------------------------------
-    // Write output
-    // -------------------------------------------------------------------------
-    // if verbose {
-    //     println!("\n===== WRITING OUTPUT ASSEMBLY =====\n");
-    // }
-
-    // let tgt_path = matches.get_one::<PathBuf>("tgt");
-
-    // match tgt_path {
-    //     None => {
-    //         println!("{}", tgt_str);
-    //     }
-    //     Some(path) => {
-    //         if let Err(err) = fs::write(&path, tgt_str) {
-    //             eprintln!("Failed writing to target file {:?}: {}", path, err);
-    //             process::exit(1);
-    //         }
-    //         if verbose {
-    //             println!("Wrote output assembly to file {:?}.", path);
-    //         }
-    //     }
-    // }
-}
-
-fn run_compiler(src_str: &str, verbose: bool) -> ast::Result<()> {
-    if verbose {
-        println!("\n===== TYPE CHECKING =====\n");
-    }
-
-    let ast = minirust_compiler::parse::program(src_str)?;
-
-    if verbose {
-        println!("{}", ast.pretty(4));
-    }
-
-    let ir_program = minirust_compiler::semant::check(&ast)?;
+    let ir_program = lower(&src_str, verbose).unwrap_or_else(|e| error(&e.render(&src_str, true)));
 
     if verbose {
         println!("{}", ir_program.pretty(4));
     }
 
-    for i in ir_program.fragments {
-        match i {
-            minirust_compiler::ir::Fragment::Proc { label, body, frame } => {
-                for stmt in body {
-                    println!("{:?}", stmt);
-                }
-            },
+    let asm_program = codegen::select(ir_program);
+
+    if verbose {
+        println!("\n===== WRITING OUTPUT ASSEMBLY =====\n");
+    }
+
+    let tgt_str = codegen::emit(&asm_program);
+
+    let tgt_path = matches.get_one::<PathBuf>("tgt");
+
+    match tgt_path {
+        None => {
+            println!("{}", tgt_str);
+        }
+        Some(path) => {
+            if let Err(err) = fs::write(&path, tgt_str) {
+                eprintln!("Failed writing to target file {:?}: {}", path, err);
+                std::process::exit(1);
+            }
+            if verbose {
+                println!("Wrote output assembly to file {:?}.", path);
+            }
         }
     }
 
     Ok(())
+}
+
+fn lower(src_str: &str, verbose: bool) -> ast::Result<ir::Program> {
+    if verbose {
+        println!("\n===== PARSING PROGRAM =====\n");
+    }
+
+    let ast_program = parse::program(src_str)?;
+
+    if verbose {
+        println!("{}", ast_program.pretty(4));
+    }
+
+    if verbose {
+        println!("\n===== TYPE CHECKING =====\n");
+    }
+
+    let ir_program = semant::check(&ast_program)?;
+
+    Ok(ir_program)
 }
 
 fn src_parser(s: &str) -> Result<PathBuf, String> {

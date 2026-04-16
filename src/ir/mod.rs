@@ -150,7 +150,4 @@ pub enum Fragment {
     },
 }
 
-#[derive(Clone, Debug)]
-pub struct Program {
-    pub fragments: Vec<Fragment>,
-}
+pub type Program = Vec<Fragment>;

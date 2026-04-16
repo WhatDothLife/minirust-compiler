@@ -7,7 +7,7 @@ use crate::{
 
 #[derive(Clone, Debug)]
 pub enum Binding {
-    /// A standard variable (or function parameter) on the stack
+    /// A standard variable
     Var(Access),
     /// A top-level function defined by a label
     Fun(Label),
@@ -18,7 +18,6 @@ pub struct Entry {
     pub ty: Tag<Type>,
     pub binding: Binding,
 }
-
 
 #[derive(Clone, Debug)]
 pub struct Environment {

@@ -142,7 +142,7 @@ peg::parser! {
         }
 
         pub rule program() -> ast::Program =
-            __ ts:(top() ++ (sep() __)) __? { ast::Program(ts) }
+            __ ts:(top() ++ (sep() __)) __? { ts }
 
     }
 }

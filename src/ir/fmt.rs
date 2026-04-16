@@ -90,10 +90,7 @@ impl Pretty for Fragment {
                     .collect::<Vec<String>>()
                     .join("\n");
 
-                format!(
-                    "{}Proc({:?}) {{\n{}Frame: {:?}\n{}\n{}}}",
-                    s, label, inner_space, frame, body_pretty, s
-                )
+                format!("{}Proc({:?}) {{\n{}\n{}}}", s, label, body_pretty, s)
             }
         }
     }
@@ -101,12 +98,12 @@ impl Pretty for Fragment {
 
 impl Pretty for Program {
     fn pretty(&self, _indent: usize) -> String {
-        let mut out = String::from("Program {\n");
-        for frag in &self.fragments {
+        let mut out = String::from("[\n");
+        for frag in self {
             out.push_str(&frag.pretty(1));
             out.push_str("\n\n"); // Double newline for spacing between functions
         }
-        out.push_str("}");
+        out.push_str("]");
         out
     }
 }

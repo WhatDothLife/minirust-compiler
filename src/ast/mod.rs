@@ -75,24 +75,6 @@ pub enum Expr {
     Seq(_Expr, _Expr),
 }
 
-pub type _Top = Tag<Top>;
-#[derive(Clone, Debug)]
-pub enum Top {
-    FunDec(FunSignature),
-}
-
-#[derive(Clone, Debug)]
-pub struct Program(pub Vec<_Top>);
-
-impl<'a> IntoIterator for &'a Program {
-    type Item = &'a _Top;
-    type IntoIter = std::slice::Iter<'a, _Top>;
-
-    fn into_iter(self) -> Self::IntoIter {
-        self.0.iter()
-    }
-}
-
 #[derive(Clone, Debug)]
 pub struct FunSignature {
     pub name: _Ident,
@@ -101,3 +83,11 @@ pub struct FunSignature {
     pub body: _Expr,
 }
 
+#[derive(Clone, Debug)]
+pub enum Top {
+    FunDec(FunSignature),
+}
+
+pub type _Top = Tag<Top>;
+
+pub type Program = Vec<_Top>;

@@ -147,7 +147,7 @@ pub fn check(program: &ast::Program) -> Result<ir::Program> {
         fragments.push(fragment);
     }
 
-    Ok(ir::Program { fragments })
+    Ok(fragments)
 }
 
 fn check_expr(

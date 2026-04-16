@@ -166,17 +166,17 @@ impl Pretty for FunSignature {
 
 impl Pretty for Program {
     fn pretty(&self, indent: usize) -> String {
-        let mut out = String::from("Program([\n");
-        for top in &self.0 {
+        let mut out = String::from("[\n");
+        for top in self {
             match top.inner() {
                 Top::FunDec(sig) => {
-                    out.push_str(&space(indent + 1));
-                    out.push_str(&sig.pretty(indent + 1));
+                    out.push_str(&space(indent));
+                    out.push_str(&sig.pretty(indent));
                     out.push_str("\n");
                 }
             }
         }
-        out.push_str("])");
+        out.push_str("]");
         out
     }
 }

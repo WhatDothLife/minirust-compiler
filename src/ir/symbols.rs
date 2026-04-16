@@ -25,10 +25,10 @@ impl fmt::Display for Label {
 }
 
 #[derive(Copy, Clone, PartialEq, Eq, Hash)]
-pub struct Temp(usize);
+pub struct Temp(pub usize);
 
 // We start at 9 to avoid collisions with FP, SP, etc.
-static TEMP_COUNT: AtomicUsize = AtomicUsize::new(9);
+static TEMP_COUNT: AtomicUsize = AtomicUsize::new(11);
 
 impl Temp {
     pub fn new() -> Temp {
@@ -49,7 +49,16 @@ impl Temp {
     pub const SP: Temp = Temp(1);
     pub const RV: Temp = Temp(2);
 
-    pub const ARG_REGS: [Temp; 6] = [Temp(3), Temp(4), Temp(5), Temp(6), Temp(7), Temp(8)];
+    pub const ARG_REGS: [Temp; 8] = [
+        Temp(3),
+        Temp(4),
+        Temp(5),
+        Temp(6),
+        Temp(7),
+        Temp(8),
+        Temp(9),
+        Temp(10),
+    ];
 }
 
 impl fmt::Debug for Temp {

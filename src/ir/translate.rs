@@ -184,6 +184,7 @@ pub fn declare_var(val: Expr, cur_frame: &mut Frame) -> (Expr, Access) {
 
     (Expr::Nx(assignment), access)
 }
+
 pub fn get_label(id: &str) -> Label {
     Label::with_name(id)
 }
