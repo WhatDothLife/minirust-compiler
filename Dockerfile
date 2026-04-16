@@ -9,5 +9,7 @@ RUN apt-get update && apt-get install -y \
     vim \
     && rm -rf /var/lib/apt/lists/*
 
+RUN rustup default nightly
+
 # Arbeitsverzeichnis im Container setzen
 WORKDIR /cc
