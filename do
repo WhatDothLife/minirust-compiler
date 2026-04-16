@@ -105,13 +105,7 @@ case "$1" in
       qemu-riscv64-static \"tmp/$FILE_NAME\""
     ;;
   test)
-    TEST_PATH=${2:-""}
-
-    if [ -n "$TEST_PATH" ] && [ "$TEST_PATH" != "--release" ]; then
-      execute_command "cargo test $CARGO_OPTS --test \"$TEST_PATH\""
-    else
-      execute_command "cargo test $CARGO_OPTS"
-    fi
+    execute_command "cargo test $CARGO_OPTS --test test -- --nocapture"
     ;;
   docker-rebuild)
     echo "Rebuilding the docker image..."
