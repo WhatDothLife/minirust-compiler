@@ -1,0 +1,40 @@
+fn main() {
+    let start_val = 10;
+    let multiplier = 2;
+    
+    fn fib(n: i64) -> i64 {
+        if n <= 1 {
+            n
+        } else {
+            fib(n - 1) + fib(n - 2)
+        }
+    }
+
+    let result = {
+        let x = start_val * multiplier; // x = 20
+        
+        // Shadowing 'x'
+        let x = 7; 
+        let fib_x = fib(x); // fib(7) = 13
+        
+        println!("{}", fib_x);
+        
+        // Return fib_x if it's large enough, else 0
+        if fib_x > 10 {
+            fib_x
+        } else {
+            0
+        }
+    };
+
+    // Verification of Outer Scope
+    let final_check = if result != 0 {
+        result + start_val
+    } else {
+        0
+    };
+
+    println!("{}", final_check); // Should print 23
+
+    ()
+}
