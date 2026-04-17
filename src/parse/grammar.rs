@@ -68,6 +68,7 @@ peg::parser! {
             / "true" { ast::Expr::Bool(true) }
             / "false" { ast::Expr::Bool(false) }
             / "(" __ e:expr() __ ")" { e.into_inner() }
+            / "{" __ s:body() __ "}" { ast::Expr::Block(s) }
             / i:ident() { ast::Expr::Ident(i)   }
 
         // Expressions involving operators or evaluation order

@@ -57,6 +57,11 @@ impl Environment {
         clone
     }
 
+    /// Used for blocks
+    pub fn enter_scope(&self) -> Self {
+        self.clone()
+    }
+
     pub fn lookup(&self, name: &str) -> Option<&Entry> {
         self.locals.get(name).or_else(|| self.globals.get(name))
     }

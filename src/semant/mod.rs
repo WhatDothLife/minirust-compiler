@@ -1,7 +1,7 @@
 mod env;
 mod eq;
 
-use crate::ast::{self, BinOp, Error, FunSignature, Result, Tag, Top, Type, _Expr, _Type};
+use crate::ast::{self, _Expr, _Type, BinOp, Error, FunSignature, Result, Tag, Top, Type};
 use crate::ir::frame::Frame;
 use crate::ir::{self, translate, Fragment};
 
@@ -310,6 +310,11 @@ fn check_expr(
                 ir: translate::print_int(e_info.ir),
                 ty: expr.to(Type::Unit),
             })
+        }
+        ast::Expr::Block(e) => {
+            let nested_env = env.enter_scope();
+            let result_ty = check_expr(e, &nested_env, frame, fragments)?;
+            Ok(result_ty)
         }
     }
 }

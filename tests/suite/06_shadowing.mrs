@@ -1,15 +1,27 @@
 fn main() {
     let x = 10;
-    println!("{}", x); 
+    println!("{}", x); // Expected: 10
     
     let x = 20; 
-    println!("{}", x); 
+    println!("{}", x); // Expected: 20
     
     fn inner_scope() {
         let x = 30; 
-        println!("{}", x); 
+        println!("{}", x); // Expected: 30
     }
     inner_scope();
+
+    let y = {
+        let x = 40;     
+        println!("{}", x); // Expected: 40
+        
+        x + 2           
+    };
+
+    println!("{}", y); // Expected: 42
     
-    println!("{}", x); 
+    // Verification of scope restoration:
+    // After the block ends, the block-local 'x' (40) is dropped.
+    // The previous 'x' (20) must be visible again.
+    println!("{}", x); // Expected: 20
 }

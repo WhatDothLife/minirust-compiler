@@ -69,6 +69,7 @@ pub enum Expr {
     If(_Expr, _Expr, _Expr),
     FunApp(_Expr, _Vec<_Expr>),
     Print(_Expr),
+    Block(_Expr),
 
     Let(_Ident, Option<_Type>, _Expr, _Expr),
     FunDec(FunSignature, _Expr),

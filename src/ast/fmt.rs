@@ -134,6 +134,7 @@ impl Pretty for Expr {
             }
 
             Expr::Print(e) => format!("Print({})", e.inner().pretty(0)),
+            Expr::Block(e) => format!("Block({})", e.inner().pretty(0)),
         }
     }
 }
