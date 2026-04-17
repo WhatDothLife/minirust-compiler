@@ -49,6 +49,10 @@ peg::parser! {
             / "fn" _ "(" _ args:list(<typ()>) _ ")" _ "->" _ ret:typ() {
                 ast::Type::Fun(args, Box::new(ret))
             }
+            / "fn" _ "(" _ args:list(<typ()>) _ ")" {
+                let (_, e) = args.span();
+                ast::Type::Fun(args, Box::new(Tag::new(ast::Type::Unit, (e, e))))
+            }
 
         rule typ() -> ast::_Type = precedence!{
             s:position!() t:@ e:position!() { Tag::new(t, (s, e)) }
@@ -119,10 +123,10 @@ peg::parser! {
             { ast::Expr::FunDec(ast::FunSignature { name: i, params: ts, ret: ty, body: t }, c) }
             "fn" spa() i:ident() _ "(" _ ts:list(<tuple_colon(<ident()>, <typ()>)>) _ ")" _ "->" _ ty:typ() __ "{" __ t:seq() __ "}"
             { ast::Expr::FunDec(ast::FunSignature { name: i.clone(), params: ts, ret: ty, body: t }, Tag::boxed(ast::Expr::Unit, i.span())) }
-            "fn" spa() i:ident() _ "(" _ ts:list(<tuple_colon(<ident()>, <typ()>)>) _ ")" _ "{" __ t:seq() __ "}" _ "\n" __ c:seq()
-            { ast::Expr::FunDec(ast::FunSignature { name: i.clone(), params: ts, ret: Tag::new(ast::Type::Unit, i.span()), body: t }, c) }
-            "fn" spa() i:ident() _ "(" _ ts:list(<tuple_colon(<ident()>, <typ()>)>) _ ")" _ "{" __ t:seq() __ "}"
-            { ast::Expr::FunDec(ast::FunSignature { name: i.clone(), params: ts, ret: Tag::new(ast::Type::Unit, i.span()), body: t }, Tag::boxed(ast::Expr::Unit, i.span())) }
+            "fn" spa() i:ident() _ "(" _ ts:list(<tuple_colon(<ident()>, <typ()>)>) _ ")" p:position!() _ "{" __ t:seq() __ "}" _ "\n" __ c:seq()
+            { ast::Expr::FunDec(ast::FunSignature { name: i.clone(), params: ts.clone(), ret: Tag::new(ast::Type::Unit, (p, p + 1)), body: t }, c)}
+            "fn" spa() i:ident() _ "(" _ ts:list(<tuple_colon(<ident()>, <typ()>)>) _ ")" p:position!() _ "{" __ t:seq() __ "}"
+            { ast::Expr::FunDec(ast::FunSignature { name: i.clone(), params: ts.clone(), ret: Tag::new(ast::Type::Unit, (p, p + 1)), body: t }, Tag::boxed(ast::Expr::Unit, i.span())) }
             --
             l:seq() __ ";" __ r:@ { ast::Expr::Seq(l, r) }
             l:seq() __ s:position!() ";" __ e:position!() { ast::Expr::Seq(l.clone(), Tag::boxed(ast::Expr::Unit, l.span())) }
