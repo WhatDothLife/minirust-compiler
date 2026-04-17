@@ -63,7 +63,6 @@ impl Pretty for Expr {
             Expr::Ident(id) => format!("Ident(\"{}\")", id.inner()),
 
             Expr::BinOp(l, op, r) => {
-                // Explicitly unwrap tags for children to avoid the "Tag { ... }" clutter
                 format!(
                     "BinOp({:?}, {}, {})",
                     op.inner(),
@@ -73,12 +72,12 @@ impl Pretty for Expr {
             }
 
             Expr::FunDec(sig, continuation) => {
-                let next_s = space(next); // Use the incremented space
                 format!(
-                    "{}\n{}Next: {}",
-                    sig.pretty(indent),
-                    next_s, // Indent the "Next" label
-                    continuation.inner().pretty(next)
+                    "FunDec(\n{}\n{}next: {}\n{})",
+                    sig.pretty(indent + 1),
+                    space(indent + 1),
+                    continuation.inner().pretty(next),
+                    space(indent),
                 )
             }
 
@@ -90,12 +89,13 @@ impl Pretty for Expr {
 
                 let next_s = space(next);
                 format!(
-                    "Let(name: {}{}, val: {})\n{}Next: {}",
+                    "Let(name: {}{}, val: {},\n{}{}\n{})",
                     name.inner(),
                     ty_str,
                     val.inner().pretty(next),
                     next_s,
-                    continuation.inner().pretty(next)
+                    continuation.inner().pretty(next),
+                    s,
                 )
             }
 
@@ -134,16 +134,13 @@ impl Pretty for Expr {
             }
 
             Expr::Print(e) => format!("Print({})", e.inner().pretty(0)),
-            Expr::Block(e) => format!("Block({})", e.inner().pretty(0)),
+            Expr::Block(e) => format!("Block(\n{}{}\n{})", space(next), e.inner().pretty(next), space(indent)),
         }
     }
 }
 
 impl Pretty for FunSignature {
     fn pretty(&self, indent: usize) -> String {
-        let s = space(indent);
-        let next = indent + 1;
-
         let params: Vec<String> = self
             .params
             .inner()
@@ -152,15 +149,14 @@ impl Pretty for FunSignature {
             .collect();
 
         format!(
-            "FunDec(\n{}name: {},\n{}args: [{}], ret: {},\n{}body: {}\n{})",
-            space(next),
+            "{}name: {},\n{}args: [{}], ret: {},\n{}body: {}",
+            space(indent),
             self.name.inner(),
-            space(next),
+            space(indent),
             params.join(", "),
             self.ret.inner(),
-            space(next),
-            self.body.inner().pretty(next),
-            s
+            space(indent),
+            self.body.inner().pretty(indent),
         )
     }
 }
