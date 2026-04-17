@@ -75,9 +75,9 @@ peg::parser! {
         pub rule expr() -> ast::_Expr = precedence! {
             s:position!() t:@ e:position!() { Tag::boxed(t, (s, e)) }
             --
-            "if" __ t:expr() __ "{" __ b:seq() __ "}" __ "else" __ "{" __ e:seq() __ "}"
+            "if" __ t:expr() __ "{" __ b:body() __ "}" __ "else" __ "{" __ e:body() __ "}"
             { ast::Expr::If(t, b, e) }
-            "if" __ t:expr() __ "{" __ b:seq() __ "}"
+            "if" __ t:expr() __ "{" __ b:body() __ "}"
             { ast::Expr::If(t, b.clone(), Tag::boxed(ast::Expr::Unit, b.span())) }
             "println!(\"{}\"," __ e:expr() __ ")"
             { ast::Expr::Print(e) }
@@ -103,35 +103,36 @@ peg::parser! {
 
 
         #[cache_left_rec]
-        pub rule seq() -> ast::_Expr = precedence! {
+        pub rule body() -> ast::_Expr = precedence! {
             s:position!() t:@ e:position!() { Tag::boxed(t, (s, e)) }
             --
             // let: 4 variants (type annotation yes/no, continuation yes/no).
             // Missing continuation defaults to Unit.
-             "let" spa() __ i:ident() __ "=" __ t:expr() _ ";" __  c:seq()
+             "let" spa() __ i:ident() __ "=" __ t:expr() _ ";" __  c:body()
               { ast::Expr::Let(i, None, t, c) }
              "let" spa() __ s:position!() i:ident() e:position!() __ "=" __ t:expr() _ ";" __
               { ast::Expr::Let(i, None, t, Tag::boxed(ast::Expr::Unit, (s, e))) }
-             "let" spa() __ i:ident() _ ":" _ ty:typ() __  "=" __ t:expr() _ ";" __  c:seq()
+             "let" spa() __ i:ident() _ ":" _ ty:typ() __  "=" __ t:expr() _ ";" __  c:body()
               { ast::Expr::Let(i, Some(ty), t, c) }
              "let" spa() __ s:position!() i:ident() e:position!()  _ ":" _ ty:typ() __ "=" __ t:expr() _ ";" __
               { ast::Expr::Let(i, Some(ty), t, Tag::boxed(ast::Expr::Unit, (s, e))) }
             // fn: 4 variants (continuation yes/no, return type yes/no).
             // Missing return type defaults to Unit.
             // Missing continuation defaults to Unit.
-            "fn" spa() i:ident() _ "(" _ ts:list(<tuple_colon(<ident()>, <typ()>)>) _ ")" _ "->" _ ty:typ() __ "{" __ t:seq() __ "}" _ "\n" __ c:seq()
+            "fn" spa() i:ident() _ "(" _ ts:list(<tuple_colon(<ident()>, <typ()>)>) _ ")" _ "->" _ ty:typ() __ "{" __ t:body() __ "}" _ "\n" __ c:body()
             { ast::Expr::FunDec(ast::FunSignature { name: i, params: ts, ret: ty, body: t }, c) }
-            "fn" spa() i:ident() _ "(" _ ts:list(<tuple_colon(<ident()>, <typ()>)>) _ ")" _ "->" _ ty:typ() __ "{" __ t:seq() __ "}"
+            "fn" spa() i:ident() _ "(" _ ts:list(<tuple_colon(<ident()>, <typ()>)>) _ ")" _ "->" _ ty:typ() __ "{" __ t:body() __ "}"
             { ast::Expr::FunDec(ast::FunSignature { name: i.clone(), params: ts, ret: ty, body: t }, Tag::boxed(ast::Expr::Unit, i.span())) }
-            "fn" spa() i:ident() _ "(" _ ts:list(<tuple_colon(<ident()>, <typ()>)>) _ ")" p:position!() _ "{" __ t:seq() __ "}" _ "\n" __ c:seq()
+            "fn" spa() i:ident() _ "(" _ ts:list(<tuple_colon(<ident()>, <typ()>)>) _ ")" p:position!() _ "{" __ t:body() __ "}" _ "\n" __ c:body()
             { ast::Expr::FunDec(ast::FunSignature { name: i.clone(), params: ts.clone(), ret: Tag::new(ast::Type::Unit, (p, p + 1)), body: t }, c)}
-            "fn" spa() i:ident() _ "(" _ ts:list(<tuple_colon(<ident()>, <typ()>)>) _ ")" p:position!() _ "{" __ t:seq() __ "}"
+            "fn" spa() i:ident() _ "(" _ ts:list(<tuple_colon(<ident()>, <typ()>)>) _ ")" p:position!() _ "{" __ t:body() __ "}"
             { ast::Expr::FunDec(ast::FunSignature { name: i.clone(), params: ts.clone(), ret: Tag::new(ast::Type::Unit, (p, p + 1)), body: t }, Tag::boxed(ast::Expr::Unit, i.span())) }
             --
-            l:seq() __ ";" __ r:@ { ast::Expr::Seq(l, r) }
-            l:seq() __ s:position!() ";" __ e:position!() { ast::Expr::Seq(l.clone(), Tag::boxed(ast::Expr::Unit, l.span())) }
+            l:body() __ ";" __ r:@ { ast::Expr::Seq(l, r) }
+            l:body() __ s:position!() ";" __ e:position!() { ast::Expr::Seq(l.clone(), Tag::boxed(ast::Expr::Unit, l.span())) }
             --
             e:expr() { e.into_inner() }
+            s:position!() { ast::Expr::Unit } // Empty function bodies
         }
 
 
@@ -139,9 +140,9 @@ peg::parser! {
         rule top() -> ast::_Top = precedence! {
             s:position!() t:@ e:position!() { Tag::new(t, (s, e)) }
             --
-           "fn" spa() i:ident() _ "(" __ ts:list(<tuple_colon(<ident()>, <typ()>)>) __ ")" _ "->" _ ty:typ() __ "{" __ t:seq() __ "}"
+           "fn" spa() i:ident() _ "(" __ ts:list(<tuple_colon(<ident()>, <typ()>)>) __ ")" _ "->" _ ty:typ() __ "{" __ t:body() __ "}"
             { ast::Top::FunDec(ast::FunSignature { name: i, params: ts, ret: ty, body: t }) }
-           "fn" spa() i:ident() _ "(" __ ts:list(<tuple_colon(<ident()>, <typ()>)>) __ ")" _ "{" __ t:seq() __ "}"
+           "fn" spa() i:ident() _ "(" __ ts:list(<tuple_colon(<ident()>, <typ()>)>) __ ")" _ "{" __ t:body() __ "}"
             { ast::Top::FunDec(ast::FunSignature { name: i.clone(), params: ts, ret: Tag::new(ast::Type::Unit, i.span()), body: t }) }
         }
 
