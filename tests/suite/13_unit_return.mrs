@@ -1,7 +1,6 @@
 fn main() {
-    fn do_nothing() {
-        ()
-    }
-    let x = do_nothing();
+    fn do_nothing() {}
+
+    let _x = do_nothing();
     println!("{}", 99); 
 }
