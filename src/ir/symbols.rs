@@ -27,7 +27,7 @@ impl fmt::Display for Label {
 #[derive(Copy, Clone, PartialEq, Eq, Hash)]
 pub struct Temp(pub usize);
 
-// We start at 9 to avoid collisions with FP, SP, etc.
+// We start at 11 to avoid collisions with FP, SP, etc.
 static TEMP_COUNT: AtomicUsize = AtomicUsize::new(11);
 
 impl Temp {
