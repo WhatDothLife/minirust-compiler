@@ -9,7 +9,7 @@ use crate::{
 pub enum Binding {
     /// A standard variable
     Var(Access),
-    /// A top-level function defined by a label
+    /// A function defined by a label
     Fun(Label),
 }
 
